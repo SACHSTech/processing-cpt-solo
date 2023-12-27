@@ -21,6 +21,7 @@ public class Sketch extends PApplet {
   float mapX;
   float mapY;
   boolean isColliding;
+  float playerRotation;
 
   public void settings() {
     size(768, 768);
@@ -166,9 +167,18 @@ public class Sketch extends PApplet {
 
     // Draws the real map over the hitbox map
     image(imgBackground, mapX, mapY);
-    // Draws the player
-    image(imgPlayer, playerXScreen, playerYScreen);
-  }
+
+    // Rotate the player towards the mouse pointer
+    playerRotation = atan2(mouseY - (playerYScreen + imgPlayer.height / 4 * 3), mouseX - (playerXScreen + imgPlayer.width / 2)) + PI / 2;
+
+    // Draws the player with rotation
+    pushMatrix();
+    translate(playerXScreen + imgPlayer.width / 2, playerYScreen + imgPlayer.height / 4 * 3);
+    rotate(playerRotation);
+    image(imgPlayer, -imgPlayer.width / 2, -imgPlayer.height / 4 * 3);
+    popMatrix();
+    
+    }
 
   public void keyPressed() {
     
