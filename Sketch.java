@@ -1,5 +1,7 @@
 import processing.core.PApplet;
 import processing.core.PImage;
+import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class Sketch extends PApplet {
   
@@ -7,6 +9,7 @@ public class Sketch extends PApplet {
   PImage imgBackground;
   PImage imgBackgroundHitBoxes;
   PImage imgPlayer;
+  PImage imgBullet;
 
   boolean playGame;
 
@@ -22,7 +25,9 @@ public class Sketch extends PApplet {
   float mapY;
   boolean isColliding;
   float playerRotation;
-
+  
+  ArrayList<Bullet> bullets = new ArrayList<Bullet>();
+  
   public void settings() {
     size(768, 768);
   }
@@ -32,6 +37,7 @@ public class Sketch extends PApplet {
     imgTitleImage = loadImage("TitleScreen.png");
     imgBackground = loadImage("Background.png");
     imgBackgroundHitBoxes = loadImage("BackgroundHitBoxes.png");
+    imgBullet = loadImage("Bullet.png");
 
     imgPlayer = loadImage("PlayerWeapon1.png");
 
@@ -39,11 +45,13 @@ public class Sketch extends PApplet {
     imgBackgroundHitBoxes.resize(imgBackgroundHitBoxes.width / 4 * 3, imgBackgroundHitBoxes.height / 4 * 3);
     imgPlayer.resize(imgPlayer.width / 4 * 3, imgPlayer.height / 4 * 3);
     imgPlayer.resize(imgPlayer.width / 5, imgPlayer.height / 5);
+    imgBullet.resize(imgBullet.width / 25, imgBullet.height / 25);
 
     playGame = false;
 
     playerXMap = -(imgBackground.width / 2 - imgPlayer.width / 2);
     playerYMap = -(imgBackground.height / 2 - imgPlayer.height / 2);  
+
   }
 
   public void draw() {
@@ -62,6 +70,26 @@ public class Sketch extends PApplet {
       text("playerWidth: " + imgPlayer.width + ", playerHeight: " + imgPlayer.height, width, height - 16);
       text("MapSizeX: " + imgBackground.width + ", MapSizeY: " + imgBackground.height, width, height - 32);
       text("ScreenSizeX: " + width + ", ScreenSizeY: " + height, width, height - 48);
+      
+      // Draw the bullets
+      for (int i = 0; i < bullets.size(); i++) {
+
+        // Move the bullet
+        bullets.get(i).x += 40 * cos(bullets.get(i).angle - PI / 2);
+        bullets.get(i).y += 40 * sin(bullets.get(i).angle - PI / 2);
+
+        // Draw the bullet
+        pushMatrix();
+        translate(bullets.get(i).x + imgPlayer.width / 2, bullets.get(i).y + imgPlayer.height * 0.75f);
+        rotate(bullets.get(i).angle);
+        image(imgBullet, -imgBullet.width / 2, -imgBullet.height / 2 - imgPlayer.height * 0.75f);
+        popMatrix();
+
+        // If the bullet is off the screen, remove it from the ArrayList
+        if (bullets.get(i).x < 0 || bullets.get(i).x > width || bullets.get(i).y < 0 || bullets.get(i).y > height) {
+          bullets.remove(i);
+        }
+      }
     }
   }
 
@@ -173,9 +201,9 @@ public class Sketch extends PApplet {
 
     // Draws the player with rotation
     pushMatrix();
-    translate(playerXScreen + imgPlayer.width / 2, playerYScreen + imgPlayer.height / 4 * 3);
+    translate(playerXScreen + imgPlayer.width / 2, playerYScreen + imgPlayer.height * 0.75f);
     rotate(playerRotation);
-    image(imgPlayer, -imgPlayer.width / 2, -imgPlayer.height / 4 * 3);
+    image(imgPlayer, -imgPlayer.width / 2, -imgPlayer.height);
     popMatrix();
     
     }
@@ -214,5 +242,10 @@ public class Sketch extends PApplet {
     else if (key == 'd') {
       playerSpeedX = 0;
     }
+  }
+  public void mousePressed() {
+
+    bullets.add(new Bullet(playerXScreen, playerYScreen, playerRotation, 0));
+
   }
 }
