@@ -10,7 +10,8 @@ public class Sketch extends PApplet {
   PImage imgDeathScreen;
   PImage imgBackground;
   PImage imgBackgroundHitBoxes;
-  PImage imgPlayer;
+  PImage imgPlayerW1;
+  PImage imgPlayerW2;
   PImage imgBullet;
   PImage imgHealth;
   PImage imgZombie;
@@ -29,19 +30,27 @@ public class Sketch extends PApplet {
   float playerRotation;
   // Health of the player
   double health;
+  // How many frames of immunity the player has after being hit by a zombie
   int immunityFrames;
+  // Reload timer for the assault rifle
+  int reloadTimer;
+  // Calculated inaccuracy angle of the assault rifle
+  float inaccuracyAngle;
 
+  // Bullet ArrayList
   ArrayList<Bullet> bullets = new ArrayList<Bullet>();
 
-  // Zombie variables
+  // Zombie variables:
+  // Wave number
   int wave;
-  int waveTimer;
+  // Zombie ArrayList
   ArrayList<Zombie> zombies = new ArrayList<Zombie>();
+  // Spawn variables
   int spawnSide;
   float spawnX;
   float spawnY;
 
-  Random zombieRandom = new Random();
+  Random random = new Random();
 
   public void settings() {
     size(768, 768);
@@ -55,14 +64,16 @@ public class Sketch extends PApplet {
     imgBackground = loadImage("Background.png");
     imgBackgroundHitBoxes = loadImage("BackgroundHitBoxes.png");
     imgBullet = loadImage("Bullet.png");
-    imgPlayer = loadImage("PlayerWeapon1.png");
+    imgPlayerW1 = loadImage("PlayerWeapon1.png");
+    imgPlayerW2 = loadImage("PlayerWeapon2.png");
     imgHealth = loadImage("Heart.png");
     imgZombie = loadImage("Zombie.png");
 
     // Resize images
     imgBackground.resize(768, 768);
     imgBackgroundHitBoxes.resize(768, 768);
-    imgPlayer.resize(imgPlayer.width / 12, imgPlayer.height / 12);
+    imgPlayerW1.resize(imgPlayerW1.width / 12, imgPlayerW1.height / 12);
+    imgPlayerW2.resize(imgPlayerW2.width / 12, imgPlayerW2.height / 12);
     imgBullet.resize(imgBullet.width / 30, imgBullet.height / 30);
     imgHealth.resize(imgHealth.width / 15, imgHealth.height / 15);
     imgZombie.resize(imgZombie.width / 14, imgZombie.height / 14);
@@ -78,40 +89,57 @@ public class Sketch extends PApplet {
     health = 1000;
     immunityFrames = 0;
 
-    // Initialize Zombie variables
+    // Misc. variables
     wave = 0;
     zombies.clear();
+    bullets.clear();
   }
 
   public void draw() {
+
+    // Title Screen
     if (showTitleScreen) {
       background(imgTitleScreen);
     }
+
+    // Death Screen
     else if (showDeathScreen) {
+
       background(imgDeathScreen);
       textFont(createFont("Constantia", 32));
       textSize(48);
       fill(136, 0, 27);
+      // Prints the number of waves the player survived
       text("You survived " + wave + " waves", width * 0.22f, height * 0.9f);
     }
+
+    // Game Screen
     else {
+
       movement();
       drawHealth();
+
+      // The player unlocks the assault rifle after surviving 5 waves
+      if (wave >= 5) {
+        assaultRifle();
+      }
+      
       drawBullets();
       spawnZombies();
       zombieMovement();
-      
-      // Print number of zombies
-      textFont(createFont("Arial", 16));
-      fill(0);
-      textAlign(LEFT, BOTTOM);
-      text("Zombies: " + zombies.size(), 10, height - 10);
-      text("Wave: " + wave, 10, height - 30);
-      text("ZombieX: " + zombies.get(0).x, 10, height - 50);
-      text("ZombieY: " + zombies.get(0).y, 10, height - 70);
-      text("PlayerX: " + playerX, 10, height - 90);
-      text("PlayerY: " + playerY, 10, height - 110);
-            
+
+      // Draw the wave number
+      textFont(createFont("Constantia", 20));
+      textSize(48);
+      fill(136, 0, 27);
+      text("Wave " + wave, 10, height * 0.95f);
+
+      // Draw the number of zombies left
+      textFont(createFont("Constantia", 20));
+      textSize(48);
+      fill(136, 0, 27);
+      text(zombies.size() + " zombies left", 10, height * 0.85f);
+
     }
   }
 
@@ -127,14 +155,14 @@ public class Sketch extends PApplet {
     if (playerX < 0) {
       playerX = 0;
     }
-    else if (playerX > width - imgPlayer.width) {
-      playerX = width - imgPlayer.width;
+    else if (playerX > width - imgPlayerW1.width) {
+      playerX = width - imgPlayerW1.width;
     }
-    if (playerY + imgPlayer.height / 2 < 0) {
-      playerY = -imgPlayer.height / 2;
+    if (playerY + imgPlayerW1.height / 2 < 0) {
+      playerY = -imgPlayerW1.height / 2;
     }
-    else if (playerY > height - imgPlayer.height) {
-      playerY = height - imgPlayer.height;
+    else if (playerY > height - imgPlayerW1.height) {
+      playerY = height - imgPlayerW1.height;
     }
 
 
@@ -142,7 +170,7 @@ public class Sketch extends PApplet {
     
     // Player Collision with black pixels
 
-    if (get((int)playerX, (int)playerY + imgPlayer.height / 2) == color(0, 0, 0)) {
+    if (get((int)playerX, (int)playerY + imgPlayerW1.height / 2) == color(0, 0, 0)) {
       if (playerSpeedX < 0) {
         playerX -= playerSpeedX;
       }
@@ -150,7 +178,7 @@ public class Sketch extends PApplet {
         playerY -= playerSpeedY;
       }
     }
-    else if (get((int)playerX + imgPlayer.width / 2, (int)playerY + imgPlayer.height / 2) == color(0, 0, 0)) {
+    else if (get((int)playerX + imgPlayerW1.width / 2, (int)playerY + imgPlayerW1.height / 2) == color(0, 0, 0)) {
       if (playerSpeedX > 0) {
         playerX -= playerSpeedX;
       }
@@ -158,7 +186,7 @@ public class Sketch extends PApplet {
         playerY -= playerSpeedY;
       }
     }
-    else if (get((int)playerX + imgPlayer.width, (int)playerY + imgPlayer.height / 2) == color(0, 0, 0)) {
+    else if (get((int)playerX + imgPlayerW1.width, (int)playerY + imgPlayerW1.height / 2) == color(0, 0, 0)) {
       if (playerSpeedX > 0) {
         playerX -= playerSpeedX;
       }
@@ -166,7 +194,7 @@ public class Sketch extends PApplet {
         playerY -= playerSpeedY;
       }
     }
-    else if (get((int)playerX, (int)playerY + imgPlayer.height / 4 * 3) == color(0, 0, 0)) {
+    else if (get((int)playerX, (int)playerY + imgPlayerW1.height / 4 * 3) == color(0, 0, 0)) {
       if (playerSpeedX < 0) {
         playerX -= playerSpeedX;
       }
@@ -174,7 +202,7 @@ public class Sketch extends PApplet {
         playerY -= playerSpeedY;
       }
     }
-    else if (get((int)playerX, (int)playerY + imgPlayer.height) == color(0, 0, 0)) {
+    else if (get((int)playerX, (int)playerY + imgPlayerW1.height) == color(0, 0, 0)) {
       if (playerSpeedX < 0) {
         playerX -= playerSpeedX;
       }
@@ -182,7 +210,7 @@ public class Sketch extends PApplet {
         playerY -= playerSpeedY;
       }
     }
-    else if (get((int)playerX + imgPlayer.width / 2, (int)playerY + imgPlayer.height) == color(0, 0, 0)) {
+    else if (get((int)playerX + imgPlayerW1.width / 2, (int)playerY + imgPlayerW1.height) == color(0, 0, 0)) {
       if (playerSpeedX > 0) {
         playerX -= playerSpeedX;
       }
@@ -190,7 +218,7 @@ public class Sketch extends PApplet {
         playerY -= playerSpeedY;
       }
     }
-    else if (get((int)playerX + imgPlayer.width, (int)playerY + imgPlayer.height / 4 * 3) == color(0, 0, 0)) {
+    else if (get((int)playerX + imgPlayerW1.width, (int)playerY + imgPlayerW1.height / 4 * 3) == color(0, 0, 0)) {
       if (playerSpeedX > 0) {
         playerX -= playerSpeedX;
       }
@@ -198,7 +226,7 @@ public class Sketch extends PApplet {
         playerY -= playerSpeedY;
       }
     }
-    else if (get((int)playerX + imgPlayer.width, (int)playerY + imgPlayer.height) == color(0, 0, 0)) {
+    else if (get((int)playerX + imgPlayerW1.width, (int)playerY + imgPlayerW1.height) == color(0, 0, 0)) {
       if (playerSpeedX > 0) {
         playerX -= playerSpeedX;
       }
@@ -215,17 +243,36 @@ public class Sketch extends PApplet {
     playerY += playerSpeedY;
 
     // Rotate the player
-    playerRotation = atan2(mouseY - playerY - imgPlayer.height / 2, mouseX - playerX - imgPlayer.width / 2) + PI / 2;
+    playerRotation = atan2(mouseY - playerY - imgPlayerW1.height / 2, mouseX - playerX - imgPlayerW1.width / 2) + PI / 2;
 
     // Draw the player
     pushMatrix();
-    translate(playerX + imgPlayer.width / 2, playerY + imgPlayer.height / 4 * 3);
+    translate(playerX + imgPlayerW1.width / 2, playerY + imgPlayerW1.height / 4 * 3);
     rotate(playerRotation);
     noTint();
-    image(imgPlayer, -imgPlayer.width / 2, -imgPlayer.height / 2);
+    if (wave < 5) {
+      image(imgPlayerW1, -imgPlayerW1.width / 2, -imgPlayerW1.height / 2);
+    }
+    else {
+      image(imgPlayerW2, -imgPlayerW2.width / 2, -imgPlayerW2.height / 2);
+    }
     popMatrix();
   }
+  
+  public void assaultRifle() {
 
+    inaccuracyAngle = PI / wave;
+
+    if (mousePressed && reloadTimer <= 0) {
+
+      bullets.add(new Bullet(playerX, playerY, playerRotation + (float)random.nextDouble(inaccuracyAngle) - inaccuracyAngle / 2, 0));
+      reloadTimer = 15 - wave;
+    }
+
+    if (reloadTimer > 0) {
+      reloadTimer--;
+    }
+  } 
   public void drawBullets() {
   
     for (int i = 0; i < bullets.size(); i++) {
@@ -236,10 +283,10 @@ public class Sketch extends PApplet {
 
       // Draw the bullet
       pushMatrix();
-      translate(bullets.get(i).x + imgPlayer.width / 2, bullets.get(i).y + imgPlayer.height * 0.75f);
+      translate(bullets.get(i).x + imgPlayerW1.width / 2, bullets.get(i).y + imgPlayerW1.height * 0.75f);
       rotate(bullets.get(i).angle);
       noTint();
-      image(imgBullet, -imgBullet.width / 2, -imgBullet.height / 2 - imgPlayer.height * 0.75f);
+      image(imgBullet, -imgBullet.width / 2, -imgBullet.height / 2 - imgPlayerW1.height * 0.75f);
       popMatrix();
 
       bullets.get(i).time++;
@@ -275,27 +322,26 @@ public class Sketch extends PApplet {
     if (zombies.size() == 0) {
 
       wave++;
-      waveTimer = 0;
       
-      for (int i = 0; i < Math.ceil(Math.pow(wave, 2) / 2); i++) {
+      for (int i = 0; i < Math.pow(wave, 2); i++) {
 
-        spawnSide = zombieRandom.nextInt(4);
+        spawnSide = random.nextInt(4);
 
         if (spawnSide == 0) {
-          spawnX = zombieRandom.nextInt(width);
+          spawnX = random.nextInt(width);
           spawnY = 0;
         }
         else if (spawnSide == 1) {
           spawnX = width;
-          spawnY = zombieRandom.nextInt(height);
+          spawnY = random.nextInt(height);
         }
         else if (spawnSide == 2) {
-          spawnX = zombieRandom.nextInt(width);
+          spawnX = random.nextInt(width);
           spawnY = height;
         }
         else if (spawnSide == 3) {
           spawnX = 0;
-          spawnY = zombieRandom.nextInt(height);
+          spawnY = random.nextInt(height);
         }
 
         zombies.add(new Zombie(spawnX, spawnY, 0, 3));
@@ -307,17 +353,17 @@ public class Sketch extends PApplet {
 
     try {
       for (int i = 0; i < zombies.size(); i++) {
-
+        
         // Rotate the zombie
-        zombies.get(i).rotation = atan2(playerY + imgPlayer.height / 2 - zombies.get(i).y - imgZombie.height / 2, 
-                                        playerX + imgPlayer.width / 2 - zombies.get(i).x - imgZombie.width / 2) + PI / 2;
+        zombies.get(i).rotation = atan2(playerY + imgPlayerW1.height / 2 - zombies.get(i).y - imgZombie.height / 2, 
+                                        playerX + imgPlayerW1.width / 2 - zombies.get(i).x - imgZombie.width / 2) + PI / 2;
 
         // Move the zombie
         zombies.get(i).x += 1 * cos(zombies.get(i).rotation - PI / 2);
         zombies.get(i).y += 1 * sin(zombies.get(i).rotation - PI / 2);
 
         // Check collision with player
-        if (dist(zombies.get(i).x, zombies.get(i).y, playerX, playerY) < imgZombie.width / 2 + imgPlayer.width / 2 && immunityFrames == 0) {
+        if (dist(zombies.get(i).x, zombies.get(i).y, playerX, playerY) < imgZombie.width / 2 && immunityFrames == 0) {
           health -= 100; // Reduce player's health by 100
           immunityFrames = 100; // Set immunity frames to 100
         }
@@ -327,7 +373,7 @@ public class Sketch extends PApplet {
 
         // Check collision with bullets
         for (int j = 0; j < bullets.size(); j++) {
-          if (dist(zombies.get(i).x, zombies.get(i).y, bullets.get(j).x, bullets.get(j).y) < imgZombie.width / 2 + imgBullet.width / 2) {
+          if (dist(zombies.get(i).x, zombies.get(i).y, bullets.get(j).x, bullets.get(j).y) < imgZombie.width / 2 + imgBullet.width) {
             zombies.get(i).health -= 1; // Reduce zombie's health by 100
             bullets.remove(j); // Remove bullet
           }
@@ -345,7 +391,6 @@ public class Sketch extends PApplet {
         noTint();
         image(imgZombie, -imgZombie.width / 2, -imgZombie.height / 2);
         popMatrix();
-
       }
     }
     catch (IndexOutOfBoundsException e) {
@@ -378,6 +423,12 @@ public class Sketch extends PApplet {
     if (keyCode == BACKSPACE) {
       health -= 100;
     }
+    if (keyCode == ENTER) {
+      health += 100;
+    }
+    if (keyCode == SHIFT) {
+      zombies.clear();
+    }
   }
 
   public void keyReleased() {
@@ -396,7 +447,7 @@ public class Sketch extends PApplet {
     }
   }
 
-  
+
   public void mousePressed() {
 
     bullets.add(new Bullet(playerX, playerY, playerRotation, 0));
