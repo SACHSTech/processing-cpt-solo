@@ -1,8 +1,9 @@
 import processing.core.PApplet;
 
 /**
- * Main class to execute sketch
- * @author 
+ * 
+ * Those who remain zombie game. Defend yourself against wave after wave of infected. Survive to wave 10 to win!
+ * @author Joshua Yin 
  *
  */
 class Main {
@@ -12,9 +13,6 @@ class Main {
 
 	
 	Sketch mySketch = new Sketch();
-	
-	// Sketch1 mySketch = new Sketch1();  // uncomment this to run this sketch file
-	// Sketch2 mySketch = new Sketch2();  // uncomment this to run this sketch file
 	
 	PApplet.runSketch(processingArgs, mySketch);
   }

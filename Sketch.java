@@ -58,9 +58,13 @@ public class Sketch extends PApplet {
   // Random object
   Random random = new Random();
 
+
+
   public void settings() {
     size(768, 768);
   }
+
+
 
   public void setup() {
 
@@ -102,6 +106,8 @@ public class Sketch extends PApplet {
     zombies.clear();
     bullets.clear();
   }
+
+
 
   public void draw() {
 
@@ -158,6 +164,8 @@ public class Sketch extends PApplet {
     }
   }
 
+
+  
   /*
    * Player movement and collision. Also draws the player.
    * @author: Joshua Yin
@@ -572,6 +580,9 @@ public class Sketch extends PApplet {
 
   /*
    * Key released method. Called when a key is released. Used to stop the player from moving when the key is released.
+   * @author Joshua Yin
+   * @param none
+   * @return void
    */
   public void keyReleased() {
     
