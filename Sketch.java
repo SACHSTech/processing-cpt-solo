@@ -146,11 +146,11 @@ public class Sketch extends PApplet {
       }
 
       // Calls all the methods
-      Movement();
-      DrawHealth();
-      DrawBullets();
-      SpawnZombies();
-      ZombieMovement();
+      movement();
+      drawHealth();
+      drawBullets();
+      spawnZombies();
+      zombieMovement();
 
       // Creates a font for the text
       textFont(createFont("Constantia", 20));
@@ -172,7 +172,7 @@ public class Sketch extends PApplet {
    * @param none
    * @return void
    */
-  public void Movement() {
+  public void movement() {
 
     // If the player is out of bounds, set the player's position to the edge of the screen
     // Left border
@@ -347,7 +347,7 @@ public class Sketch extends PApplet {
    * @return void
    */
 
-  public void DrawBullets() {
+  public void drawBullets() {
     
     // Loops through the ArrayList
     for (int i = 0; i < bullets.size(); i++) {
@@ -384,7 +384,7 @@ public class Sketch extends PApplet {
    * @return void
    */
 
-  public void DrawHealth() { 
+  public void drawHealth() { 
     
     // If the player's health is 0, show the death screen
     if (dblHealth <= 0) {
@@ -416,7 +416,7 @@ public class Sketch extends PApplet {
    * @return void 
    */
 
-  public void SpawnZombies() {
+  public void spawnZombies() {
 
     // If there are no zombies left, spawn a new wave
     if (zombies.size() == 0) {
@@ -461,7 +461,7 @@ public class Sketch extends PApplet {
    * @param none
    * @return void
    */
-  public void ZombieMovement() {
+  public void zombieMovement() {
 
     // Try-catch block to prevent IndexOutOfBoundsException
     try {
@@ -516,7 +516,7 @@ public class Sketch extends PApplet {
 
     // If the IndexOutOfBoundsException is caught, spawn a new wave
     catch (IndexOutOfBoundsException e) {
-      SpawnZombies();
+      spawnZombies();
     }
   }
 
